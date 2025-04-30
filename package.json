@@ -1,6 +1,6 @@
 {
   "name": "@lucasliet/duckduckgo-ai-provider",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "duckduckgo ai provider compatible with vercel ai sdk",
   "homepage": "https://github.com/lucasliet/duckduckgo-ai-provider#readme",
   "bugs": {
@@ -36,7 +36,7 @@
     "build:umd": "rollup dist/webapi/index.bundle.js --format umd --name duckduckgo -o dist/webapi/index.umd.js && rollup dist/webapi/index.bundle.min.js --compact --format umd --name duckduckgo -o dist/webapi/index.umd.min.js",
     "build:deno": "mkdir -p dist/deno && cp -R src/. dist/deno && AI_SDK_VERSION=$(node -p \"require('./package.json').dependencies['@ai-sdk/provider']\") && find dist/deno -name \"*.ts\" -print0 | xargs -0 sed -i.bak -e \"s/\\.js'/'.ts'/g\" -e \"s|from '@ai-sdk/provider'|from 'npm:@ai-sdk/provider@${AI_SDK_VERSION}'|g\" && npm run sedcleanup",
     "build:types": "tsc -p tsconfig/types.json && cd src && find . -name '*.d.ts' -maxdepth 1 -type f -exec rsync -R '{}' ../dist/types \\;",
-    "build:jsr": "npx --yes jsr publish --dry-run --allow-dirty --allow-slow-types",
+    "build:jsr": "npx --yes jsr publish --dry-run",
     "clear": "rm -Rf dist",
     "test": "jest"
   },

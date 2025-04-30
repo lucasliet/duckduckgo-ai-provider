@@ -1,42 +1,35 @@
-name: Build
+name: Build and upload dist artifact
 
 on:
   workflow_call:
-    outputs:
-      cache-key:
-        value: ${{ jobs.build.outputs.cache-key }}
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   build:
+    name: Build and upload dist artifact
+    needs:
+      - tests
     concurrency: build-${{ github.ref }}
     runs-on: ubuntu-latest
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           cache: 'npm'
       - run: npm clean-install
-      - id: cache-key
-        run: echo "value=dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}" >> $GITHUB_OUTPUT
-      - name: Cache dist
-        uses: actions/cache@v4
-        id: dist
-        with:
-          path: dist
-          key: ${{ steps.cache-key.outputs.value }}
-      - name: Tests
-        run: npm test
-        if: ${{ steps.dist.outputs.cache-hit != 'true' }}
+
       - name: Build
         run: npm run build
-        if: ${{ steps.dist.outputs.cache-hit != 'true' }}
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
         with:
           name: dist
+          retention-days: 1
           path: dist
-      - run: git reset HEAD --hard

@@ -2,9 +2,12 @@
 
 Um provedor para o [Vercel AI SDK](https://sdk.vercel.ai/) que permite integrar facilmente o modelo de IA do DuckDuckGo em suas aplicações JavaScript/TypeScript.
 
-[![NPM](https://img.shields.io/npm/v/duckduckgo-ai-provider)](https://www.npmjs.com/package/duckduckgo-ai-provider)
+[![License](https://img.shields.io/github/license/lucasliet/duckduckgo-ai-provider?logo=gitbook&labelColor=%23262c31&color=red&logoColor=white)](LICENSE)
 [![JSR @lucasliet](https://jsr.io/badges/@lucasliet)](https://jsr.io/@lucasliet)
+[![tests](https://github.com/lucasliet/duckduckgo-ai-provider/actions/workflows/tests.yml/badge.svg)](https://github.com/lucasliet/duckduckgo-ai-provider/actions/workflows/tests.yml)
 [![publish](https://github.com/lucasliet/duckduckgo-ai-provider/actions/workflows/publish.yml/badge.svg)](https://github.com/lucasliet/duckduckgo-ai-provider/actions/workflows/publish.yml)
+[![JSR Version](https://img.shields.io/jsr/v/%40lucasliet/duckduckgo-ai-provider)](https://jsr.io/@lucasliet/duckduckgo-ai-provider)
+[![NPM](https://img.shields.io/npm/v/duckduckgo-ai-provider)](https://www.npmjs.com/package/duckduckgo-ai-provider)
 
 ## Características
 
@@ -30,14 +33,9 @@ import { DuckDuckGoAIService } from "jsr:@lucasliet/duckduckgo-ai-provider";
 
 ## Uso Básico
 
-### Next.js com Vercel AI SDK
-
 ```typescript
-// app/api/chat/route.ts
 import { DuckDuckGoAIService } from "duckduckgo-ai-provider";
 import { generateText } from "ai";
-
-export const runtime = "edge";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
@@ -65,10 +63,10 @@ async function askQuestion() {
   console.log(response); // "A capital da Suécia é Estocolmo."
 }
 
-// Uso com streaming
-async function askQuestionWithStream() {
+// Uso com reader
+async function askQuestionWithReader() {
   const ddg = new DuckDuckGoAIService();
-  const reader = await ddg.chatStream([
+  const reader = await ddg.chatReader([
     { role: "user", content: "Explique brevemente o que é inteligência artificial." }
   ]);
   
@@ -78,6 +76,18 @@ async function askQuestionWithStream() {
     const { done, value } = await reader.read();
     if (done) break;
     console.log(decoder.decode(value));
+  }
+}
+
+// Uso com streaming
+async function askQuestionWithStreaming() {
+  const ddg = new DuckDuckGoAIService();
+  const stream = await ddg.chatStream([
+    { role: "user", content: "Explique brevemente o que é inteligência artificial." }
+  ]);
+  
+  for await (const chunk of stream) {
+    console.log(chunk);
   }
 }
 ```
@@ -105,7 +115,3 @@ Este pacote funciona em:
 - Deno (via JSR)
 - Bun
 - Ambientes edge (Vercel Edge Runtime, Cloudflare Workers, etc.)
-
-## Licença
-
-MIT
