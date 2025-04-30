@@ -12,7 +12,7 @@
   },
   "license": "MIT",
   "author": "Lucas Oliveira",
-  "type": "commonjs",
+  "type": "module",
   "keywords": [
     "duckduckgo",
     "ai",
@@ -20,16 +20,45 @@
     "vercel",
     "sdk"
   ],
-  "main": "DuckDuckGoAIService.ts",
+  "main": "dist/webapi/index.cjs",
+  "module": "dist/webapi/index.js",
+  "browser": "dist/webapi/index.umd.js",
+  "types": "dist/types/index.d.ts",
   "scripts": {
+    "sedcleanup": "find dist/deno -name '*.bak' -type f -print0 | xargs -0 rm -f",
+    "build": "npm run build:ts && npm run build:bundle && npm run build:bundle-min && npm run build:umd && npm run build:deno && npm run build:types",
+    "build:ts": "tsc -p tsconfig.json",
+    "build:bundle": "esbuild --bundle dist/webapi/index.js --platform=browser --format=esm --target=es2022 --outfile=dist/webapi/index.bundle.js",
+    "build:bundle-min": "esbuild --minify --bundle dist/webapi/index.js --platform=browser --format=esm --target=es2022 --outfile=dist/webapi/index.bundle.min.js",
+    "build:umd": "rollup dist/webapi/index.bundle.js --format umd --name duckduckgo -o dist/webapi/index.umd.js && rollup dist/webapi/index.bundle.min.js --compact --format umd --name duckduckgo -o dist/webapi/index.umd.min.js",
+    "build:deno": "mkdir -p dist/deno && cp -R src/. dist/deno && find dist/deno -name \"*.ts\" -print0 | xargs -0 sed -i.bak -e \"s/\\.js'/'.ts'/g\" -e \"s|from '@ai-sdk/provider'|from 'https://esm.sh/@ai-sdk/provider'|g\" -e \"s|from '@ai-sdk/provider-utils'|from 'https://esm.sh/@ai-sdk/provider-utils'|g\" -e \"s|from '@ai-sdk/ui-utils'|from 'https://esm.sh/@ai-sdk/ui-utils'|g\" && npm run sedcleanup",
+    "build:types": "tsc -p tsconfig/types.json && cd src && find . -name '*.d.ts' -maxdepth 1 -type f -exec rsync -R '{}' ../dist/types \\;",
+    "build:jsr": "npx --yes jsr publish --dry-run --allow-dirty",
+    "clear": "rm -Rf dist",
     "test": "jest"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/webapi/index.js",
+      "require": "./dist/webapi/index.cjs",
+      "browser": "./dist/webapi/index.umd.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "ai": "^4.3.11"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "@types/json-schema": "^7.0.15",
+    "esbuild": "^0.25.3",
     "jest": "^29.7.0",
-    "ts-jest": "^29.3.2"
+    "rollup": "^4.40.0",
+    "ts-jest": "^29.3.2",
+    "typescript": "^5.8.3"
   }
 }

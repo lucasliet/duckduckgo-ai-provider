@@ -1,6 +1,8 @@
 {
-  "include": ["src", "test"],
+  "include": ["src/**/*"],
   "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist/webapi",
     "module": "CommonJS",
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],

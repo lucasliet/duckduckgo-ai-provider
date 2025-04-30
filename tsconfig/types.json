@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "exclude": ["../src/**/*.test.ts", "../test/**/*.ts"],
+  "compilerOptions": {
+    "target": "ESNext",
+    "outDir": "../dist/types",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "removeComments": false
+  }
+}

@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  publish-gpr:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          always-auth: true
+          registry-url: https://npm.pkg.github.com/
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+  npm:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+          always-auth: true
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  jsr:
+    needs: 
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - name: Load cached dist
+        uses: actions/cache@v4
+        id: dist
+        with:
+          path: dist
+          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
+          fail-on-cache-miss: true
+      - name: Publish via JSR
+        run: npx jsr publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

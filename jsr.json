@@ -1,0 +1,12 @@
+{
+  "$schema": "https://jsr.io/schema/config-file.v1.json",
+  "name": "@lucasliet/duckduckgo-ai-provider",
+  "version": "1.0.0",
+  "exports": {
+    ".": "./dist/deno/index.ts"
+  },
+  "publish": {
+    "include": [ "LICENSE", "README.md", "dist/deno/**/*.ts" ],
+    "exclude": [ "**/*.test.ts", "**/*.bak", "**/node_modules/**" ]
+  }
+}
