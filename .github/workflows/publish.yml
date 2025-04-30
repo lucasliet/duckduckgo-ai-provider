@@ -9,11 +9,12 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
 
-  publish-gpr:
+  github-packages:
     needs:
       - build
     runs-on: ubuntu-latest
     permissions:
+      packages: write
       id-token: write
     steps:
       - name: Checkout
@@ -62,13 +63,17 @@ jobs:
           path: dist
           key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
           fail-on-cache-miss: true
+      - name: Remove @lucasliet scope from package name
+        run: |
+          jq 'if .name | test("^@lucasliet/") then .name |= sub("^@lucasliet/";"") else . end' package.json > package.tmp.json
+          mv package.tmp.json package.json
       - name: Publish
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   jsr:
-    needs: 
+    needs:
       - build
     runs-on: ubuntu-latest
     permissions:
@@ -82,7 +87,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: 'npm'
+          cache: "npm"
       - name: Load cached dist
         uses: actions/cache@v4
         id: dist
@@ -90,7 +95,13 @@ jobs:
           path: dist
           key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
           fail-on-cache-miss: true
+      - name: Setup deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: |
+          cd dist/deno
+          deno install
+          cd ../..
       - name: Publish via JSR
-        run: npx jsr publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx jsr publish --allow-slow-types --allow-dirty

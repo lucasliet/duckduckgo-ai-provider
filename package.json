@@ -1,6 +1,6 @@
 {
-  "name": "duckduckgo-ai-provider",
-  "version": "1.0.0",
+  "name": "@lucasliet/duckduckgo-ai-provider",
+  "version": "1.0.2",
   "description": "duckduckgo ai provider compatible with vercel ai sdk",
   "homepage": "https://github.com/lucasliet/duckduckgo-ai-provider#readme",
   "bugs": {
@@ -9,6 +9,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lucasliet/duckduckgo-ai-provider.git"
+  },
+  "publishConfig": {
+    "@lucasliet:registry": "https://npm.pkg.github.com"
   },
   "license": "MIT",
   "author": "Lucas Oliveira",
@@ -31,9 +34,9 @@
     "build:bundle": "esbuild --bundle dist/webapi/index.js --platform=browser --format=esm --target=es2022 --outfile=dist/webapi/index.bundle.js",
     "build:bundle-min": "esbuild --minify --bundle dist/webapi/index.js --platform=browser --format=esm --target=es2022 --outfile=dist/webapi/index.bundle.min.js",
     "build:umd": "rollup dist/webapi/index.bundle.js --format umd --name duckduckgo -o dist/webapi/index.umd.js && rollup dist/webapi/index.bundle.min.js --compact --format umd --name duckduckgo -o dist/webapi/index.umd.min.js",
-    "build:deno": "mkdir -p dist/deno && cp -R src/. dist/deno && find dist/deno -name \"*.ts\" -print0 | xargs -0 sed -i.bak -e \"s/\\.js'/'.ts'/g\" -e \"s|from '@ai-sdk/provider'|from 'https://esm.sh/@ai-sdk/provider'|g\" -e \"s|from '@ai-sdk/provider-utils'|from 'https://esm.sh/@ai-sdk/provider-utils'|g\" -e \"s|from '@ai-sdk/ui-utils'|from 'https://esm.sh/@ai-sdk/ui-utils'|g\" && npm run sedcleanup",
+    "build:deno": "mkdir -p dist/deno && cp -R src/. dist/deno && AI_SDK_VERSION=$(node -p \"require('./package.json').dependencies['@ai-sdk/provider']\") && find dist/deno -name \"*.ts\" -print0 | xargs -0 sed -i.bak -e \"s/\\.js'/'.ts'/g\" -e \"s|from '@ai-sdk/provider'|from 'npm:@ai-sdk/provider@${AI_SDK_VERSION}'|g\" && npm run sedcleanup",
     "build:types": "tsc -p tsconfig/types.json && cd src && find . -name '*.d.ts' -maxdepth 1 -type f -exec rsync -R '{}' ../dist/types \\;",
-    "build:jsr": "npx --yes jsr publish --dry-run --allow-dirty",
+    "build:jsr": "npx --yes jsr publish --dry-run --allow-dirty --allow-slow-types",
     "clear": "rm -Rf dist",
     "test": "jest"
   },
@@ -50,6 +53,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
+    "@ai-sdk/provider": "^1.1.3",
     "ai": "^4.3.11"
   },
   "devDependencies": {
