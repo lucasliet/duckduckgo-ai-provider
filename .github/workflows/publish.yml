@@ -1,4 +1,4 @@
-name: Release
+name: Publish Release
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 jobs:
   build:
+    name: Test and build artifacts
     uses: ./.github/workflows/build.yml
 
   github-packages:
@@ -15,25 +16,25 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           always-auth: true
           registry-url: https://npm.pkg.github.com/
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
+      
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
         with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+          name: "dist"
+          path: "dist"
+      
       - name: Publish
         run: npm publish
         env:
@@ -43,30 +44,30 @@ jobs:
     needs:
       - build
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
           registry-url: https://registry.npmjs.org
           always-auth: true
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
+      
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
         with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+          name: "dist"
+          path: "dist"
+      
       - name: Remove @lucasliet scope from package name
         run: |
           jq 'if .name | test("^@lucasliet/") then .name |= sub("^@lucasliet/";"") else . end' package.json > package.tmp.json
           mv package.tmp.json package.json
+      
       - name: Publish
         run: npm publish
         env:
@@ -77,31 +78,39 @@ jobs:
       - build
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: "Download dist artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          name: "dist"
+          path: "dist"
+      
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: lts/*
-          cache: "npm"
-      - name: Load cached dist
-        uses: actions/cache@v4
-        id: dist
-        with:
-          path: dist
-          key: dist-${{ hashFiles('src/**/*.ts', 'tsconfig/*.json', '.github/workflows/*.yml', 'package-lock.json') }}
-          fail-on-cache-miss: true
+
       - name: Setup deno
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+
+      - name: Cache deno install
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/deno
+          key: deno-${{ runner.os }}-${{ hashFiles('deno.lock') }}
+          restore-keys: |
+            deno-${{ runner.os }}-
       - run: |
           cd dist/deno
           deno install
           cd ../..
+      
       - name: Publish via JSR
-        run: npx jsr publish --allow-slow-types --allow-dirty
+        run: npx jsr publish
